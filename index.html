@@ -1,0 +1,1324 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Jorsell — DigiMarket (Fixed Full) + Afiliator & Withdraw</title>
+  <meta name="description" content="Jorsell - Marketplace Produk Digital (Supabase Powered SPA) - with affiliate & withdraw features" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{
+      --brand:#5D3A9B;
+      --brand-2:#5D3A9B;
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --muted:#282828;
+      --text:#000000;
+      --radius:12px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;font-family:Inter,system-ui,Arial}
+    .app{max-width:420px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative}
+    header.app-header{background:linear-gradient(180deg,var(--brand),var(--brand-2));color:white;padding:12px 14px;padding-bottom:18px;border-bottom-left-radius:18px;border-bottom-right-radius:18px}
+    .header-top{display:flex;align-items:center;justify-content:space-between}
+    .logo{display:flex;align-items:center;gap:10px;font-weight:700}
+    .logo .badge{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.12)}
+    .search-row{display:flex;gap:8px;margin-top:10px}
+    .search{flex:1;display:flex;align-items:center;background:rgba(255,255,255,0.12);padding:8px;border-radius:10px}
+    .search input{border:0;background:transparent;outline:none;color:#FAF3E0;width:100%}
+    .icon-btn{width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;color:white;cursor:pointer}
+    main{padding:12px;padding-bottom:100px;flex:1}
+    .card{background:var(--card);border-radius:12px;padding:12px;box-shadow:0 6px 14px rgba(15,23,42,0.06);margin-bottom:12px}
+    .carousel{height:140px;border-radius:12px;overflow:hidden;position:relative}
+    .carousel img{Width:100%;height:100%;object-fit:cover;display:block}
+    .carousel .dots{position:absolute;left:12px;bottom:8px;display:flex;gap:6px}
+    .dot{width:8px;height:8px;border-radius:8px;background:rgba(255,255,255,0.6)}
+    .dot.active{background:white}
+    .cats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+    .cat{background:white;border-radius:10px;padding:8px;text-align:center;font-size:12px;box-shadow:0 4px 10px rgba(15,23,42,0.04);cursor:pointer}
+    .cat img{width:36px;height:36px;margin:0 auto;border-radius:8px;background:linear-gradient(180deg,#fbf5ff,#f7f0ff);display:block}
+    .products{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+    .product{background:var(--card);border-radius:12px;padding:8px;cursor:pointer;display:flex;flex-direction:column}
+    .p-thumb{height:110px;border-radius:10px;background:linear-gradient(180deg,#f8f4ff,#fff);display:flex;align-items:center;justify-content:center;font-weight:700;margin-bottom:8px}
+    .p-title{font-size:14px;font-weight:700}
+    .p-meta{font-size:12px;color:var(--muted);margin-top:6px}
+    .p-actions{display:flex;gap:8px;margin-top:auto}
+    .btn{flex:1;background:var(--brand);color:white;border:0;padding:8px;border-radius:10px;cursor:pointer}
+    .btn-outline{flex:1;border:1px solid rgba(0,0,0,0.06);padding:8px;border-radius:10px;background:transparent}
+    .page{display:none}
+    .page.active{display:block}
+    .bottom-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;width:420px;max-width:96%;height:72px;background:white;border-radius:16px;display:flex;align-items:center;justify-content:space-around;box-shadow:0 10px 30px rgba(15,23,42,0.12);z-index:999}
+    .nav-item{flex:1;text-align:center;font-size:12px;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .nav-item.active{color:var(--brand);font-weight:700}
+    .profile-row{display:flex;gap:12px;align-items:center}
+    .avatar{width:64px;height:64px;border-radius:14px;background:linear-gradient(180deg,var(--brand),var(--brand-2));display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+    @media(min-width:900px){ .app{margin-top:18px;border-radius:18px;box-shadow:0 12px 40px rgba(15,23,42,0.08);overflow:hidden} .bottom-nav{width:420px} }
+    .small{font-size:13px;color:var(--muted)}
+    input,textarea,select{padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);width:100%}
+    .hidden{display:none}
+    /* withdraw & affiliate helpers */
+    .muted-note{font-size:13px;color:var(--muted);margin-top:8px}
+    .link-box{display:flex;gap:8px;margin-top:8px}
+    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:100px;background:#111;color:white;padding:8px 12px;border-radius:8px;opacity:0.95;z-index:9999}
+    #profile .card h4 {
+  margin-bottom: 6px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+#profile .card {
+  box-shadow: 0 4px 10px rgba(15,23,42,0.05);
+}
+
+#profile label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+#profile input, #profile select, #profile textarea {
+  width: 100%;
+}
+
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="app-header">
+      <div class="header-top">
+        <div class="logo">
+          <div class="badge">J</div>
+          <div>
+            <div style="font-weight:700">Jorsell</div>
+            <div style="font-size:12px;opacity:0.9">Marketplace Digital</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <div class="icon-btn" id="btn-wishlist" title="Notifikasi">🔔</div>
+          <div class="icon-btn" id="btn-cart-top" title="Keranjang">🛒</div>
+        </div>
+      </div>
+
+      <div class="search-row">
+        <div class="search">
+          <span style="margin-right:8px">🔍</span>
+          <input id="search-input" placeholder="Cari produk, template, ebook..." />
+        </div>
+        <div class="icon-btn" id="btn-search-go">Go</div>
+      </div>
+    </header>
+
+    <main>
+<!-- NOTIFICATIONS POPUP -->
+<div id="notif-popup" class="card hidden" 
+     style="position:absolute;top:70px;right:10px;z-index:999;
+            width:300px;max-height:380px;overflow:auto;
+            box-shadow:0 10px 20px rgba(0,0,0,0.15)">
+  <h4>Notifikasi</h4>
+  <div id="notif-list" class="small">Belum ada notifikasi</div>
+</div>
+
+      <!-- LOGIN -->
+<section id="auth" class="page card active">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+    <div>
+      <h2>Masuk ke Akun</h2>
+      <div class="small">Akses jual & beli produk digital</div>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;display:grid;gap:8px">
+    <input id="auth-email" type="email" placeholder="Email" required />
+    <input id="auth-pass" type="password" placeholder="Password" required />
+    <div style="display:flex;gap:8px">
+      <button id="btn-login" class="btn">Login</button>
+      <button id="btn-show-register" class="btn-outline">Daftar</button>
+    </div>
+    <button id="btn-google" class="btn-outline">Login dengan Google</button>
+    <div id="auth-note" class="small" style="color:var(--muted)"></div>
+  </div>
+</section>
+
+<!-- REGISTER -->
+<section id="register" class="page card">
+  <h2>Daftar Akun Baru</h2>
+  <div class="small">Bergabung di marketplace Jorsell dan mulai jual / beli produk digital</div>
+
+  <div style="margin-top:12px;display:grid;gap:8px">
+    <input id="reg-name" type="text" placeholder="Nama Lengkap" required />
+    <input id="reg-email" type="email" placeholder="Email" required />
+    <input id="reg-pass" type="password" placeholder="Password (min 6 karakter)" required />
+    <div style="display:flex;gap:8px">
+      <button id="btn-register" class="btn">Daftar</button>
+      <button id="btn-show-login" class="btn-outline">Sudah punya akun?</button>
+    </div>
+    <div id="reg-note" class="small" style="color:var(--muted)"></div>
+  </div>
+</section>
+
+      <!-- HOME -->
+      <section id="home" class="page card">
+        <div class="carousel" id="carousel">
+          <img id="carousel-img" src="" alt="banner">
+          <div class="dots" id="carousel-dots"></div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+          <strong>Kategori</strong>
+          <a href="#" id="see-all-cats" class="small">Lihat semua</a>
+        </div>
+        <div class="cats" id="home-cats"></div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+          <strong>Rekomendasi untukmu</strong>
+          <div class="small">Berdasarkan produk terbaru</div>
+        </div>
+        <div class="products" id="home-products"></div>
+      </section>
+
+<!-- CATEGORIES -->
+<section id="categories" class="page card">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <h3>Kategori Produk Digital</h3>
+    <div class="small">Pilih kategori untuk melihat produk</div>
+  </div>
+
+  <!-- kolom pencarian -->
+  <div style="margin-top:12px;margin-bottom:8px">
+    <input id="category-search" type="text" placeholder="🔍 Cari kategori..." />
+  </div>
+
+  <!-- daftar kategori -->
+  <div id="categories-list" style="margin-top:8px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px"></div>
+</section>
+
+
+      <!-- CART -->
+      <section id="cart" class="page card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h3>Keranjang</h3>
+          <div class="small">{<span id="cart-count">0</span>} item</div>
+        </div>
+        <div id="cart-list" style="margin-top:12px"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+          <div class="small">Total</div>
+          <div id="cart-total" style="font-weight:700">Rp0</div>
+        </div>
+        <div style="margin-top:12px"><button id="btn-checkout" class="btn">Checkout</button></div>
+      </section>
+
+      <!-- CHAT -->
+      <section id="chat" class="page card">
+        <h3>Chat</h3>
+        <div id="chat-box" style="margin-top:8px;max-height:360px;overflow:auto;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.04)"></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="chat-input" placeholder="Ketik pesan..." />
+          <button id="btn-send-chat" class="btn">Kirim</button>
+        </div>
+      </section>
+
+      <!-- PROFILE -->
+<!-- PROFILE -->
+<section id="profile" class="page card">
+
+  <!-- Info pengguna -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="profile-row" style="align-items:center;gap:16px">
+      <div class="avatar" id="profile-avatar">U</div>
+      <div style="flex:1">
+        <div id="profile-name" style="font-weight:700;font-size:16px">-</div>
+        <div id="profile-email" class="small">-</div>
+      </div>
+      <div style="text-align:right">
+        <div class="small">Saldo</div>
+        <div id="profile-balance" style="font-weight:700;font-size:15px">Rp0</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;text-align:right">
+      <button id="btn-logout" class="btn" style="background:#ef4444;width:100%">Logout</button>
+    </div>
+  </div>
+
+  <!-- Upload Produk -->
+  <div class="card" style="margin-bottom:12px">
+    <h4>Upload Produk Baru</h4>
+    <div style="display:grid;gap:6px;margin-top:8px">
+      <label>File</label><input type="file" id="file-upload" />
+      <label>Judul</label><input id="prod-title" />
+      <label>Kategori</label><input id="prod-cat" placeholder="Ebook, Template..." />
+      <label>Harga</label><input id="prod-price" type="number" />
+      <label>Deskripsi</label><textarea id="prod-desc"></textarea>
+      <button id="submit-product" class="btn" style="margin-top:8px">Upload & Simpan</button>
+      <div id="upload-note" class="small" style="color:var(--muted)"></div>
+    </div>
+  </div>
+
+  <!-- Rekening -->
+  <div class="card" style="margin-bottom:12px">
+    <h4>Rekening Saya</h4>
+    <div class="small">Simpan rekening bank atau e-wallet untuk penarikan otomatis.</div>
+
+    <div style="display:grid;gap:6px;margin-top:8px">
+      <label>Tipe Akun</label>
+      <select id="account-type">
+        <option value="bank">Bank</option>
+        <option value="ewallet">E-Wallet</option>
+      </select>
+
+      <label>Nama Bank / E-Wallet</label>
+      <select id="account-name"></select>
+
+      <label>Nomor Rekening / E-Wallet</label>
+      <input id="account-number" placeholder="Contoh: 1234567890" />
+
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="btn-save-account" class="btn" style="flex:1">Simpan</button>
+        <button id="btn-clear-account" class="btn-outline" style="flex:1">Hapus</button>
+      </div>
+      <div id="save-account-note" class="muted-note"></div>
+    </div>
+  </div>
+
+  <!-- Afiliator -->
+  <div class="card" style="margin-bottom:12px">
+    <h4>Afiliasi</h4>
+    <div class="small">Bagikan link produk untuk dapat komisi.</div>
+    <div class="link-box" style="margin-top:8px">
+      <input id="affiliate-link" readonly placeholder="Login untuk membuat link afiliasi" />
+      <button id="btn-copy-aff" class="btn-outline">Salin</button>
+    </div>
+    <div id="affiliate-note" class="muted-note">Link berisi ?ref=USERID</div>
+    <div style="margin-top:8px">
+      <button id="btn-open-aff-stats" class="btn-outline" style="width:100%">Lihat Statistik Afiliasi</button>
+      <div id="aff-stats" class="small muted-note" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- Penarikan -->
+  <div class="card">
+    <h4>Penarikan Saldo</h4>
+    <div class="small">Tarik saldo ke rekening atau e-wallet.</div>
+    <div style="display:grid;gap:6px;margin-top:8px">
+      <label>Jumlah (Rp)</label><input id="withdraw-amount" type="number" placeholder="50000" />
+      <label>Metode</label>
+      <select id="withdraw-method">
+        <option value="bank">Bank Transfer</option>
+        <option value="gopay">Gopay</option>
+        <option value="ovo">OVO</option>
+      </select>
+      <label>Tujuan</label><input id="withdraw-destination" placeholder="1234567890" />
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="btn-request-withdraw" class="btn" style="flex:1">Kirim</button>
+        <button id="btn-load-withdraws" class="btn-outline" style="flex:1">Riwayat</button>
+      </div>
+      <div id="withdraw-note" class="muted-note"></div>
+      <div id="withdraw-list" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+</section>
+
+
+    </main>
+
+    <footer style="padding:8px 12px;text-align:center;color:var(--muted)">© <span id="year"></span> Jorsell</footer>
+
+    <!-- bottom nav always visible -->
+    <nav class="bottom-nav" id="bottom-nav">
+      <div class="nav-item" data-page="home">🏠<div>Beranda</div></div>
+      <div class="nav-item" data-page="categories">🗂️<div>Kategori</div></div>
+      <div class="nav-item" data-page="cart">🛒<div>Keranjang</div></div>
+      <div class="nav-item" data-page="chat">💬<div>Chat</div></div>
+      <div class="nav-item" data-page="profile">👤<div>Profil</div></div>
+    </nav>
+  </div>
+
+  <script>
+  // ---------- Supabase init (fixed) ----------
+  const SUPABASE_URL =              'https://dukipkyrhvvoaxjtlazf.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1a2lwa3lyaHZ2b2F4anRsYXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3OTkzNTYsImV4cCI6MjA3NzM3NTM1Nn0._b24puVhVXXe7hAHfng_FLHSxrZK9_LfCoXa0Jvwfj8';
+
+  // use the global 'supabase' script to get createClient
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log('✅ Supabase client initialized');
+
+  // ---------- Helpers ----------
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const fmt = n => { n = Number(n)||0; return 'Rp' + n.toLocaleString('id-ID'); };
+  function escapeHTML(s){ if(!s) return ''; return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c] || c)); }
+
+  let currentUser = null;
+
+  // small toast
+  function toast(msg, time=2200){
+    const el = document.createElement('div'); el.className='toast'; el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(()=> el.remove(), time);
+  }
+
+  // ---------- UI helpers ----------
+  function showPage(id){
+    $$('.page').forEach(p=>p.classList.remove('active'));
+    const el = document.getElementById(id);
+    if(el) el.classList.add('active');
+    // nav active
+    $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===id));
+  }
+
+  function renderProfile(){
+    if(!currentUser){
+      $('#profile-name').textContent='-';
+      $('#profile-email').textContent='-';
+      $('#profile-balance').textContent='Rp0';
+      $('#auth-user-placeholder').textContent='';
+      $('#profile-avatar').textContent='U';
+      $('#affiliate-link').value = '';
+      $('#affiliate-link').placeholder = 'Login untuk membuat link afiliasi';
+      $('#aff-stats').textContent = '';
+      return;
+    }
+    $('#profile-name').textContent = currentUser.user_metadata?.full_name || currentUser.email || currentUser.id?.slice(0,8) || 'User';
+    $('#profile-email').textContent = currentUser.email || '-';
+    $('#auth-user-placeholder').textContent = currentUser.email || '';
+    $('#profile-avatar').textContent = (currentUser.user_metadata?.full_name||currentUser.email||'U')[0].toUpperCase();
+    // show stored balance if any in metadata (note: you must manage balance server-side)
+    $('#profile-balance').textContent = fmt(currentUser.user_metadata?.balance || 0);
+    // prepare affiliate link base
+    $('#affiliate-link').value = createAffiliateLink();
+    $('#affiliate-link').placeholder = 'Salin link afiliasi';
+    loadAffiliateStats();
+  }
+async function removeFromCart(cartId) {
+  const { error } = await sb.from('cart').delete().eq('id', cartId);
+  if (error) toast('Gagal menghapus item');
+  else {
+    toast('Item dihapus');
+    loadCart();
+  }
+}
+async function checkout() {
+  alert("Fitur checkout belum diaktifkan!");
+  // atau nanti kamu tambahkan logika pembayaran di sini
+}
+
+  // ---------- Auth ----------
+  async function initAuth(){
+    try{
+      const { data: { user } } = await sb.auth.getUser();
+      if(user){ currentUser = user; await postLoginSetup(); }
+      else { showPage('auth'); }
+    }catch(err){
+      console.error('initAuth error', err);
+      showPage('auth');
+    }
+
+$('#btn-checkout').addEventListener('click', checkout);
+
+async function checkout() {
+  if (!currentUser) return toast('Login dulu');
+
+  const { data: items, error } = await sb
+    .from('cart')
+    .select('product_id, quantity, products(price)')
+    .eq('user_id', currentUser.id);
+
+  if (error || !items || !items.length) {
+    toast('Keranjang kosong atau error');
+    return;
+  }
+
+  const total = items.reduce((a, b) => a + b.products.price * b.quantity, 0);
+
+  const { data: order, error: orderError } = await sb
+    .from('orders')
+    .insert([{ user_id: currentUser.id, total }])
+    .select()
+    .single();
+
+  if (orderError) {
+    console.error(orderError);
+    return toast('Gagal checkout');
+  }
+
+  const orderItems = items.map(i => ({
+    order_id: order.id,
+    product_id: i.product_id,
+    price: i.products.price,
+    quantity: i.quantity
+  }));
+
+  await sb.from('order_items').insert(orderItems);
+  await sb.from('cart').delete().eq('user_id', currentUser.id);
+
+  toast('Checkout berhasil 🎉');
+  loadCart();
+}
+
+    // listen for changes
+    sb.auth.onAuthStateChange((event, session) => {
+      if(session && session.user){
+        currentUser = session.user;
+        postLoginSetup();
+      } else {
+        currentUser = null;
+        onLogout();
+      }
+    });
+  }
+
+async function signInEmail(email, password){
+  if(!email || !password)
+    return $('#auth-note').textContent = 'Isi email & password';
+  $('#auth-note').textContent = 'Memeriksa...';
+  try{
+    // 1️⃣ Cek dulu apakah email ada di tabel members
+    const { data: members, error: memErr } = await sb
+      .from('members')
+      .select('email')
+      .eq('email', email)
+      .limit(1);
+
+    if (memErr) throw memErr;
+    if (!members || members.length === 0) {
+      $('#auth-note').textContent = 'Email belum terdaftar. Silakan daftar dulu.';
+      return;
+    }
+
+    // 2️⃣ Jika terdaftar, baru login ke Supabase Auth
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error) return $('#auth-note').textContent = 'Login gagal: ' + error.message;
+    $('#auth-note').textContent = 'Login berhasil';
+  } catch(err){
+    console.error(err);
+    $('#auth-note').textContent = 'Login error: ' + err.message;
+  }
+}
+async function addToCart(productId) {
+  if (!currentUser) {
+    toast('Silakan login atau daftar dulu');
+    showPage('register');
+    return;
+  }
+
+  const { error } = await sb
+    .from('cart')
+    .insert([{ user_id: currentUser.id, product_id: productId }]);
+
+  if (error) {
+    console.error(error);
+    toast('Gagal menambah ke keranjang');
+  } else {
+    toast('Produk ditambahkan ke keranjang 🛒');
+  }
+}
+
+   
+  async function signUpEmail(email, password){
+    if(!email || !password) return $('#auth-note').textContent = 'Isi email & password';
+    $('#auth-note').textContent = '';
+    try{
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if(error) return $('#auth-note').textContent = 'Registrasi gagal: ' + error.message;
+      $('#auth-note').textContent = 'Registrasi sukses. Cek email (jika verifikasi aktif).';
+    }catch(err){
+      console.error(err); $('#auth-note').textContent = 'Register error: '+err.message;
+    }
+  }
+
+  async function signInWithGoogle(){
+    try{
+      const { error } = await sb.auth.signInWithOAuth({ provider: 'google' });
+      if(error) $('#auth-note').textContent = 'Google login gagal: '+error.message;
+    }catch(err){ console.error(err); $('#auth-note').textContent = 'Google login error'; }
+  }
+
+  async function signOut(){
+    try{
+      await sb.auth.signOut();
+      currentUser = null;
+      onLogout();
+    }catch(err){ console.error('signOut', err); }
+  }
+
+  function onLogout(){
+    renderProfile();
+    loadHomeProducts();
+    loadCategories();
+    loadCart();
+    loadMessagesStop();
+    showPage('auth');
+  }
+
+  async function postLoginSetup(){
+    renderProfile();
+    await loadHomeProducts();
+    await loadCategories();
+    await loadCart();
+    await loadMessagesStart();
+    showPage('home');
+  }
+
+  // ---------- Carousel (simple) ----------
+  const banners = [
+    { svgText: 'Promo Jorsell - Diskon Produk Digital' },
+    { svgText: 'Template & E-book Pilihan' },
+    { svgText: 'Jual & Beli dengan Mudah' }
+  ];
+  let carouselIdx = 0;
+  function makeBannerSvg(text){
+    const encoded = encodeURIComponent(text);
+    return `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='300'><rect width='100%' height='100%' fill='%236f39c8'/><text x='50%' y='50%' fill='white' font-size='28' font-family='Arial' text-anchor='middle' dominant-baseline='central'>${encoded}</text></svg>`;
+  }
+  function renderCarousel(){
+    const img = $('#carousel-img'), dots = $('#carousel-dots');
+    img.src = makeBannerSvg(banners[carouselIdx].svgText);
+    dots.innerHTML = banners.map((b,i)=>`<div class="dot ${i===carouselIdx? 'active':''}"></div>`).join('');
+  }
+  setInterval(()=>{ carouselIdx=(carouselIdx+1)%banners.length; renderCarousel(); }, 4000);
+  renderCarousel();
+
+  // ---------- Affiliate tracking ----------
+  // When user visits with ?ref=USERID&product=PRODUCTID we record a click
+  async function trackAffiliateClick(refId, productId){
+    if(!refId) return;
+    try{
+      // check existing record
+      const { data: existing, error: selErr } = await sb.from('affiliates').select('*').eq('user_id', refId).eq('product_id', productId).limit(1);
+      if(selErr) {
+        console.warn('aff select err', selErr);
+      }
+      if(existing && existing.length){
+        const rec = existing[0];
+        await sb.from('affiliates').update({ clicks: (rec.clicks||0)+1, last_click_at: new Date().toISOString() }).eq('id', rec.id);
+      } else {
+        // insert new record
+        await sb.from('affiliates').insert([{ user_id: refId, product_id: productId, clicks: 1, sales: 0, commission_total: 0, created_at: new Date().toISOString(), last_click_at: new Date().toISOString() }]);
+      }
+      console.log('Affiliate click tracked for', refId, productId);
+    }catch(err){
+      console.error('trackAffiliateClick', err);
+    }
+  }
+
+  // create affiliate link for current user (generic, doesn't point to a product)
+  function createAffiliateLink(productId){
+    if(!currentUser) return '';
+    const base = location.origin + location.pathname;
+    if(productId) return `${base}?ref=${encodeURIComponent(currentUser.id)}&product=${encodeURIComponent(productId)}`;
+    return `${base}?ref=${encodeURIComponent(currentUser.id)}`;
+  }
+
+  async function copyAffiliateLink(){
+    const val = $('#affiliate-link').value;
+    if(!val) return alert('Login untuk membuat link afiliasi');
+    try{
+      await navigator.clipboard.writeText(val);
+      toast('Link afiliasi disalin');
+    }catch(err){
+      prompt('Salin manual link afiliasi ini:', val);
+    }
+  }
+
+  async function loadAffiliateStats(){
+    if(!currentUser) return;
+    try{
+      // aggregate clicks/sales for this user across products
+      const { data, error } = await sb.from('affiliates').select('product_id, clicks, sales, commission_total').eq('user_id', currentUser.id);
+      if(error) throw error;
+      if(!data || !data.length) { $('#aff-stats').textContent = 'Belum ada aktivitas afiliasi.'; return; }
+      const totalClicks = data.reduce((s,r)=>s+(r.clicks||0),0);
+      const totalSales = data.reduce((s,r)=>s+(r.sales||0),0);
+      const totalComm = data.reduce((s,r)=>s+(r.commission_total||0),0);
+      $('#aff-stats').textContent = `Clicks: ${totalClicks} • Sales: ${totalSales} • Komisi: ${fmt(totalComm)}`;
+    }catch(err){
+      console.error('loadAffiliateStats', err);
+    }
+  }
+
+  // ---------- Products & Categories ----------
+  async function loadHomeProducts(q=''){
+    $('#home-products').innerHTML = '<div class="small">Memuat...</div>';
+    try{
+      let query = sb.from('products').select('*').order('created_at',{ascending:false}).limit(60);
+      if(q) query = sb.from('products').select('*').ilike('title', `%${q}%`).order('created_at',{ascending:false}).limit(60);
+      const { data, error } = await query;
+      if(error) throw error;
+      renderProductsGrid(data||[],'#home-products');
+    }catch(err){
+      $('#home-products').innerHTML = '<div class="small">Gagal: '+err.message+'</div>';
+      console.error('loadHomeProducts', err);
+    }
+  }
+
+  function renderProductsGrid(list, selector){
+    const container = document.querySelector(selector);
+    container.innerHTML = '';
+    if(!list.length) return container.innerHTML = '<div class="small">Belum ada produk</div>';
+    list.forEach(p=>{
+      const el = document.createElement('div'); el.className='product';
+      el.innerHTML = `<div class="p-thumb">${escapeHTML((p.title||'').slice(0,2))}</div>
+        <div class="p-title">${escapeHTML(p.title||'Untitled')}</div>
+        <div class="p-meta">${escapeHTML(p.category||'')} • ${fmt(p.price||0)}</div>
+        <div class="p-actions">
+          <button class="btn" data-buy="${p.id}">Beli</button>
+          <button class="btn-outline" data-add="${p.id}">Keranjang</button>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="btn-outline" data-aff="${p.id}">Afiliasi</button>
+          <button class="btn-outline" data-copylink="${p.id}">Salin Link</button>
+        </div>`;
+      container.appendChild(el);
+    });
+    container.querySelectorAll('button[data-add]').forEach(b=>b.onclick = ()=> addToCart(b.dataset.add));
+    container.querySelectorAll('button[data-buy]').forEach(b=>b.onclick = ()=> alert('Pembayaran belum diimplementasikan (dummy).'));
+    container.querySelectorAll('button[data-aff]').forEach(b=>b.onclick = (e)=> {
+      const pid = e.currentTarget.dataset.aff;
+      if(!currentUser) return alert('Login untuk membuat link afiliasi');
+      $('#affiliate-link').value = createAffiliateLink(pid);
+      toast('Link afiliasi siap di profil');
+      showPage('profile');
+    });
+    container.querySelectorAll('button[data-copylink]').forEach(b=>b.onclick = async (e)=> {
+      const pid = e.currentTarget.dataset.copylink;
+      const link = currentUser ? createAffiliateLink(pid) : (location.origin + location.pathname + `?product=${encodeURIComponent(pid)}`);
+      try{ await navigator.clipboard.writeText(link); toast('Link produk disalin'); }
+      catch(err){ prompt('Salin link ini:', link); }
+    });
+  }
+
+  async function loadCategories(){
+    try{
+      const { data, error } = await sb.from('products').select('category').neq('category','').limit(500);
+      if(error) throw error;
+      const cats = Array.from(new Set((data||[]).map(r=>r.category).filter(Boolean)));
+      const homeCats = $('#home-cats'); homeCats.innerHTML='';
+      cats.slice(0,10).forEach(c=>{
+        const div=document.createElement('div'); div.className='cat';
+        div.innerHTML=`<img src='' alt=''><div style='margin-top:6px;font-weight:600'>${escapeHTML(c)}</div>`;
+        div.onclick=()=> filterByCategory(c);
+        homeCats.appendChild(div);
+      });
+      const catList = $('#categories-list'); catList.innerHTML='';
+      cats.forEach(c=>{
+        const card=document.createElement('div'); card.className='card';
+        card.innerHTML=`<div style='display:flex;justify-content:space-between;align-items:center'><div><strong>${escapeHTML(c)}</strong><div class='small'>Lihat produk</div></div><button class='btn' data-cat='${escapeHTML(c)}'>Lihat</button></div>`;
+        card.querySelector('button').onclick=()=>filterByCategory(c);
+        catList.appendChild(card);
+      });
+    }catch(err){
+      console.error('loadCategories', err);
+    }
+  }
+
+  async function filterByCategory(cat){
+    try{
+      const { data, error } = await sb.from('products').select('*').eq('category', cat).order('created_at',{ascending:false});
+      if(error) throw error;
+      renderProductsGrid(data||[],'#home-products');
+      showPage('home');
+    }catch(err){
+      alert('Gagal muat kategori: '+err.message);
+    }
+  }
+
+  // ---------- Cart ----------
+  async function addToCart(productId){
+    if(!currentUser) return alert('Silakan login dulu');
+    try{
+      const { data: exists } = await sb.from('carts').select('*').eq('owner', currentUser.id).eq('product_id', productId).limit(1);
+      if(exists && exists.length){
+        const rec = exists[0];
+        await sb.from('carts').update({ qty: (rec.qty||1)+1 }).eq('id', rec.id);
+      } else {
+        await sb.from('carts').insert([{ owner: currentUser.id, product_id: productId, qty:1, created_at: new Date().toISOString() }]);
+      }
+      await loadCart();
+      alert('Ditambahkan ke keranjang');
+    }catch(err){
+      alert('Gagal: '+err.message);
+      console.error('addToCart', err);
+    }
+  }
+
+  async function loadCart(){
+    $('#cart-list').innerHTML = '<div class="small">Memuat cart...</div>';
+    try{
+      if(!currentUser) return $('#cart-list').innerHTML = '<div class="small">Silakan login untuk melihat keranjang</div>';
+      const { data, error } = await sb.from('carts').select('*, products(*)').eq('owner', currentUser.id).order('created_at',{ascending:false});
+      if(error) throw error;
+      renderCart(data||[]);
+    }catch(err){
+      $('#cart-list').innerHTML = '<div class="small">Gagal: '+err.message+'</div>';
+      console.error('loadCart', err);
+    }
+  }
+
+  function renderCart(items){
+    const container = $('#cart-list'); container.innerHTML='';
+    if(!items.length){ container.innerHTML='<div class="small">Keranjang kosong</div>'; $('#cart-count').textContent='0'; $('#cart-total').textContent='Rp0'; return; }
+    let total=0;
+    items.forEach(r=>{
+      const p = r.products || {};
+      const row = document.createElement('div'); row.className='card';
+      row.style.display='flex'; row.style.justifyContent='space-between'; row.style.alignItems='center';
+      row.innerHTML = `<div><div style='font-weight:700'>${escapeHTML(p.title||'Produk')}</div><div class='small'>${fmt(p.price||0)} • Qty: ${r.qty||1}</div></div><div style='display:flex;flex-direction:column;gap:6px'><button class='btn-outline' data-remove='${r.id}'>Hapus</button><button class='btn' data-buy='${r.product_id}'>Beli</button></div>`;
+      container.appendChild(row);
+      total += (p.price||0)*(r.qty||1);
+    });
+    $('#cart-count').textContent = items.length;
+    $('#cart-total').textContent = fmt(total);
+    container.querySelectorAll('button[data-remove]').forEach(b=>b.onclick = async ()=>{
+      const id = b.dataset.remove;
+      await sb.from('carts').delete().eq('id', id);
+      await loadCart();
+    });
+    container.querySelectorAll('button[data-buy]').forEach(b=>b.onclick = ()=> alert('Pembayaran belum diimplementasikan.'));
+  }
+
+  // ---------- Chat (polling) ----------
+  let chatTimer = null;
+  async function loadMessagesStart(){
+    if(chatTimer) clearInterval(chatTimer);
+    await fetchMessages();
+    chatTimer = setInterval(fetchMessages, 3000);
+  }
+  function loadMessagesStop(){ if(chatTimer) clearInterval(chatTimer); chatTimer = null; }
+  async function fetchMessages(){
+    try{
+      const { data, error } = await sb.from('messages').select('*').order('created_at',{ascending:true}).limit(500);
+      if(error) throw error;
+      renderMessages(data||[]);
+    }catch(err){
+      console.error('fetchMessages', err);
+    }
+  }
+  function renderMessages(list){
+    const box = $('#chat-box'); box.innerHTML='';
+    if(!list.length) return box.innerHTML='<div class="small">Belum ada pesan</div>';
+    list.forEach(m=>{
+      const div=document.createElement('div'); div.className='card'; div.style.marginBottom='8px';
+      div.innerHTML = `<div style='font-weight:700'>${m.owner===currentUser?.id? 'Saya' : (m.owner||'Anon').slice(0,8)}</div><div class='small'>${escapeHTML(m.text)}</div><div class='small' style='opacity:0.6'>${new Date(m.created_at).toLocaleString()}</div>`;
+      box.appendChild(div);
+    });
+    box.scrollTop = box.scrollHeight;
+  }
+  async function sendChat(){
+    if(!currentUser) return alert('Login dulu');
+    const t = $('#chat-input').value.trim(); if(!t) return;
+    await sb.from('messages').insert([{ owner: currentUser.id, text: t, created_at: new Date().toISOString() }]);
+    $('#chat-input').value='';
+    await fetchMessages();
+  }
+
+  // ---------- Upload product ----------
+  async function submitProduct(){
+    if(!currentUser) return alert('Login dulu');
+    const file = $('#file-upload').files[0];
+    const title = $('#prod-title').value.trim();
+    const cat = $('#prod-cat').value.trim();
+    const price = Number($('#prod-price').value)||0;
+    const desc = $('#prod-desc').value.trim();
+    if(!file || !title) return alert('Lengkapi judul & file');
+    $('#upload-note').textContent = 'Mengunggah...';
+    try{
+      const filename = `${currentUser.id}/${Date.now()}_${file.name}`;
+      const { data:up, error:upErr } = await sb.storage.from('products').upload(filename, file, { upsert:false });
+      if(upErr) throw upErr;
+      const prod = { title, category:cat, price, description:desc, file_url: filename, owner: currentUser.id, created_at: new Date().toISOString() };
+      const { data, error } = await sb.from('products').insert([prod]);
+      if(error) throw error;
+      $('#upload-note').textContent = 'Upload sukses';
+      $('#file-upload').value=''; $('#prod-title').value=''; $('#prod-cat').value=''; $('#prod-price').value=''; $('#prod-desc').value='';
+      await loadHomeProducts(); await loadCategories();
+    }catch(err){
+      $('#upload-note').textContent = 'Gagal: '+err.message;
+      console.error('submitProduct', err);
+    }
+  }
+// ---------- CATEGORIES (fixed & improved) ----------
+const DEFAULT_CATEGORIES = [
+  { name: "Ebook", icon: "📚" },
+  { name: "Template", icon: "🎨" },
+  { name: "Musik", icon: "🎵" },
+  { name: "Desain", icon: "🖌️" },
+  { name: "Video", icon: "🎬" },
+  { name: "Plugin", icon: "⚙️" },
+  { name: "Script / Code", icon: "💻" },
+  { name: "Kursus Online", icon: "🎓" },
+  { name: "Aplikasi", icon: "📱" },
+  { name: "Font / Typografi", icon: "🔤" },
+  { name: "Lainnya", icon: "🗂️" }
+];
+
+// fungsi memuat kategori dengan jumlah produk
+async function loadCategories() {
+  const container = document.getElementById('categories-list');
+  container.innerHTML = '<div class="small">Memuat kategori...</div>';
+  try {
+    const { data: products, error } = await sb.from('products').select('category');
+    if (error) throw error;
+
+    // hitung jumlah produk tiap kategori
+    const counts = {};
+    (products || []).forEach(p => {
+      const cat = (p.category || 'Lainnya').trim();
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+
+    // gabungkan dengan kategori umum
+    const allCats = DEFAULT_CATEGORIES.map(c => ({
+      ...c,
+      count: counts[c.name] || 0
+    }));
+
+    renderCategories(allCats);
+  } catch (err) {
+    console.error('loadCategories', err);
+    container.innerHTML = '<div class="small">Gagal memuat kategori.</div>';
+  }
+}
+
+// render kategori dengan pencarian
+function renderCategories(list) {
+  const container = document.getElementById('categories-list');
+  const search = document.getElementById('category-search');
+  if (!container) return;
+
+  function showCats(filter = '') {
+    container.innerHTML = '';
+    const filtered = list.filter(c =>
+      c.name.toLowerCase().includes(filter.toLowerCase())
+    );
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="small">Kategori tidak ditemukan</div>';
+      return;
+    }
+
+    filtered.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.cursor = 'pointer';
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <strong>${c.icon} ${c.name}</strong>
+            <div class="small" style="color:gray">${c.count} produk</div>
+          </div>
+          <button class="btn" data-cat="${c.name}">Lihat</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    // event klik
+    container.querySelectorAll('button[data-cat]').forEach(btn => {
+      btn.onclick = () => filterByCategory(btn.dataset.cat);
+    });
+  }
+
+  // tampil pertama kali
+  showCats();
+
+  // pencarian real-time
+  if (search) {
+    search.oninput = e => showCats(e.target.value);
+  }
+}
+async function filterByCategory(cat) {
+  try {
+    const { data, error } = await sb
+      .from('products')
+      .select('*')
+      .eq('category', cat)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    renderProductsGrid(data || [], '#home-products');
+    showPage('home');
+  } catch (err) {
+    alert('Gagal muat kategori: ' + err.message);
+  }
+}
+
+  // ---------- Withdraw (penarikan) ----------
+  async function requestWithdraw(){
+    if(!currentUser) return alert('Login dulu');
+    const rawAmount = Number($('#withdraw-amount').value) || 0;
+    const method = $('#withdraw-method').value;
+    const dest = $('#withdraw-destination').value.trim();
+    if(rawAmount <= 0) return $('#withdraw-note').textContent = 'Masukkan jumlah yang valid.';
+    if(!dest) return $('#withdraw-note').textContent = 'Masukkan tujuan (nomor rekening / e-wallet).';
+    $('#withdraw-note').textContent = 'Mengirim permintaan...';
+    try{
+      // Insert withdraw request
+      const payload = { user_id: currentUser.id, amount: rawAmount, method, destination: dest, status: 'pending', created_at: new Date().toISOString() };
+      const { data, error } = await sb.from('withdraw_requests').insert([payload]);
+      if(error) throw error;
+      $('#withdraw-note').textContent = 'Permintaan penarikan terkirim. Status: pending.';
+      // Optionally: reduce user's balance metadata (requires RLS or server function). We'll not auto-update balance here.
+      $('#withdraw-amount').value=''; $('#withdraw-destination').value='';
+      await loadWithdraws();
+    }catch(err){
+      $('#withdraw-note').textContent = 'Gagal mengirim: '+err.message;
+      console.error('requestWithdraw', err);
+    }
+  }
+
+  async function loadWithdraws(){
+    if(!currentUser) return alert('Login dulu');
+    $('#withdraw-list').innerHTML = '<div class="small">Memuat riwayat...</div>';
+    try{
+      const { data, error } = await sb.from('withdraw_requests').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(50);
+      if(error) throw error;
+      if(!data || !data.length) { $('#withdraw-list').innerHTML = '<div class="small">Belum ada permintaan penarikan.</div>'; return; }
+      $('#withdraw-list').innerHTML = '';
+      data.forEach(r=>{
+        const div = document.createElement('div'); div.className='card';
+        div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><div><strong>${fmt(r.amount)}</strong><div class="small">${r.method} • ${r.destination}</div></div><div class="small" style="text-align:right">${(r.status||'pending').toUpperCase()}<div class="small" style="opacity:0.7">${new Date(r.created_at).toLocaleString()}</div></div></div>`;
+        $('#withdraw-list').appendChild(div);
+      });
+    }catch(err){
+      $('#withdraw-list').innerHTML = '<div class="small">Gagal: '+err.message+'</div>';
+      console.error('loadWithdraws', err);
+    }
+  }
+
+  
+  // ---------- Rekening (Bank & E-Wallet) helpers ----------
+  const BANKS = ["BCA","BNI","BRI","Mandiri","CIMB","Permata","Danamon","BTN","Panin"];
+  const EWALLETS = ["Gopay","OVO","DANA","ShopeePay","LinkAja","Sakuku"];
+
+  function populateAccountNames(type){
+    const sel = document.getElementById('account-name');
+    if(!sel) return;
+    sel.innerHTML = '';
+    const list = type === 'bank' ? BANKS : EWALLETS;
+    list.forEach(n=>{
+      const o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o);
+    });
+  }
+
+  // save account to user_metadata (real-time)
+  async function saveAccount(){
+    if(!currentUser) return alert('Silakan login dulu');
+    const type = document.getElementById('account-type').value;
+    const name = document.getElementById('account-name').value;
+    const number = document.getElementById('account-number').value.trim();
+    if(!number) return document.getElementById('save-account-note').textContent = 'Masukkan nomor rekening / e-wallet.';
+    document.getElementById('save-account-note').textContent = 'Menyimpan...';
+    try{
+      const { data, error } = await sb.auth.updateUser({ data: { account_type: type, account_name: name, account_number: number }});
+      if(error) throw error;
+      currentUser = data.user;
+      renderProfile(); // refresh UI
+      document.getElementById('save-account-note').textContent = 'Rekening tersimpan.';
+      toast('Rekening tersimpan');
+      // Auto-fill withdraw destination input and disable it
+      const dest = document.getElementById('withdraw-destination');
+      if(dest){
+        dest.value = number;
+        dest.disabled = true;
+      }
+    }catch(err){
+      console.error('saveAccount', err);
+      document.getElementById('save-account-note').textContent = 'Gagal menyimpan: ' + (err.message || err);
+    }
+  }
+
+  async function clearAccount(){
+    if(!currentUser) return alert('Silakan login dulu');
+    if(!confirm('Hapus rekening tersimpan?')) return;
+    try{
+      const { data, error } = await sb.auth.updateUser({ data: { account_type: null, account_name: null, account_number: null }});
+      if(error) throw error;
+      currentUser = data.user;
+      renderProfile();
+      document.getElementById('save-account-note').textContent = 'Rekening dihapus.';
+      toast('Rekening dihapus');
+      const dest = document.getElementById('withdraw-destination');
+      if(dest){
+        dest.value = '';
+        dest.disabled = false;
+      }
+    }catch(err){
+      console.error('clearAccount', err);
+      document.getElementById('save-account-note').textContent = 'Gagal: ' + (err.message || err);
+    }
+  }
+
+  // modify requestWithdraw to use saved rekening if available; keep backward compatibility
+  async function requestWithdraw(){
+    if(!currentUser) return alert('Silakan login dulu');
+    const rawAmount = Number($('#withdraw-amount').value) || 0;
+    if(rawAmount <= 0) return $('#withdraw-note').textContent = 'Masukkan jumlah yang valid.';
+    // prefer stored metadata
+    const meta = currentUser.user_metadata || {};
+    const accName = meta.account_name || '';
+    const accNum = meta.account_number || '';
+    const accType = meta.account_type || '';
+    let method = $('#withdraw-method').value;
+    let destinationInput = $('#withdraw-destination');
+    let dest = destinationInput ? destinationInput.value.trim() : '';
+
+    if(accName && accNum){
+      // use stored data
+      method = accType === 'ewallet' ? (method || 'gopay') : 'bank';
+      dest = accNum;
+    } else {
+      // if no stored account, require destination as before
+      if(!dest) return $('#withdraw-note').textContent = 'Masukkan tujuan (nomor rekening / e-wallet) atau simpan rekening di profil.';
+    }
+
+    $('#withdraw-note').textContent = 'Mengirim permintaan...';
+    try{
+      const payload = { user_id: currentUser.id, amount: rawAmount, method, destination: dest, status: 'pending', created_at: new Date().toISOString() };
+      const { data, error } = await sb.from('withdraw_requests').insert([payload]);
+      if(error) throw error;
+      $('#withdraw-note').textContent = 'Permintaan penarikan terkirim. Status: pending.';
+      $('#withdraw-amount').value=''; if(!accNum && destinationInput) destinationInput.value='';
+      await loadWithdraws();
+      toast('Permintaan penarikan terkirim');
+    }catch(err){
+      $('#withdraw-note').textContent = 'Gagal mengirim: '+err.message;
+      console.error('requestWithdraw', err);
+    }
+  }
+
+  // enhance renderProfile to populate account selects and autofill withdraw destination
+  const _origRenderProfile = renderProfile;
+  function renderProfile(){
+    _origRenderProfile();
+    if(!currentUser) return;
+    // populate account selects
+    const meta = currentUser.user_metadata || {};
+    const accType = meta.account_type || 'bank';
+    const accName = meta.account_name || '';
+    const accNumber = meta.account_number || '';
+
+    const accTypeEl = document.getElementById('account-type');
+    const accNameEl = document.getElementById('account-name');
+    const accNumEl = document.getElementById('account-number');
+    if(accTypeEl){
+      accTypeEl.value = accType;
+      populateAccountNames(accType);
+      if(accNameEl && accName) accNameEl.value = accName;
+      if(accNumEl) accNumEl.value = accNumber || '';
+    }
+    // autofill withdraw destination and disable if using saved account
+    const destEl = document.getElementById('withdraw-destination');
+    if(destEl){
+      if(accNumber){
+        destEl.value = accNumber;
+        destEl.disabled = true;
+      } else {
+        destEl.value = destEl.value || '';
+        destEl.disabled = false;
+      }
+    }
+  }
+
+  // ---------- Events & init ----------
+  document.addEventListener('DOMContentLoaded', async ()=>{
+    // ---------- Notifikasi ----------
+let notifVisible = false;
+
+async function loadNotifications(){
+  if(!currentUser){
+    toast('Silakan daftar untuk melihat notifikasi');
+    showPage('register');
+    return;
+  }
+  const box = $('#notif-list');
+  box.innerHTML = '<div class="small">Memuat...</div>';
+  try{
+    const { data, error } = await sb
+      .from('notifications')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    if(error) throw error;
+    if(!data || data.length === 0){
+      box.innerHTML = '<div class="small">Tidak ada notifikasi</div>';
+      return;
+    }
+
+    box.innerHTML = data.map(n => `
+      <div class="card" style="margin-bottom:6px;cursor:pointer"
+           data-id="${n.id}" data-read="${n.is_read}">
+        <div style="font-weight:${n.is_read ? '400':'700'}">
+          ${escapeHTML(n.title)}
+        </div>
+        <div class="small">${escapeHTML(n.message || '')}</div>
+        <div class="small" style="opacity:0.6">
+          ${new Date(n.created_at).toLocaleString()}
+        </div>
+      </div>`).join('');
+
+    // Event klik setiap notifikasi
+    box.querySelectorAll('.card').forEach(c => {
+      c.addEventListener('click', async e => {
+        const id = c.dataset.id;
+        await sb.from('notifications').update({ is_read: true }).eq('id', id);
+        toast('Notifikasi dibaca');
+        loadNotifications();
+      });
+    });
+
+  }catch(err){
+    console.error('loadNotifications', err);
+    box.innerHTML = '<div class="small">Gagal memuat notifikasi</div>';
+  }
+}
+
+// Toggle tampil/sembunyi popup
+$('#btn-wishlist').addEventListener('click', () => {
+  const popup = $('#notif-popup');
+  notifVisible = !notifVisible;
+  if(notifVisible){
+    popup.classList.remove('hidden');
+    loadNotifications();
+  } else {
+    popup.classList.add('hidden');
+  }
+});
+
+// Tutup popup jika klik di luar
+document.addEventListener('click', e => {
+  const popup = $('#notif-popup');
+  const btn = $('#btn-wishlist');
+  if(!popup.contains(e.target) && !btn.contains(e.target)){
+    popup.classList.add('hidden');
+    notifVisible = false;
+  }
+});
+
+    // Rekening controls
+    const accTypeEl = document.getElementById('account-type');
+    if(accTypeEl) accTypeEl.addEventListener('change', (e)=> populateAccountNames(e.target.value));
+    const accNameEl = document.getElementById('account-name');
+    if(accNameEl && !accNameEl.children.length) populateAccountNames(document.getElementById('account-type')?.value || 'bank');
+    const saveBtn = document.getElementById('btn-save-account');
+    if(saveBtn) saveBtn.addEventListener('click', saveAccount);
+    const clearBtn = document.getElementById('btn-clear-account');
+    if(clearBtn) clearBtn.addEventListener('click', clearAccount);
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // bottom nav click
+// bottom nav click dengan proteksi login
+$$('.nav-item').forEach(n => n.addEventListener('click', () => {
+  const p = n.dataset.page;
+if (p === 'cart') loadCart();
+
+  // Jika user belum login dan mencoba buka profil atau chat
+  if (!currentUser && (p === 'profile' || p === 'chat')) {
+    toast('Silakan daftar terlebih dahulu');
+    showPage('register'); // arahkan ke halaman daftar
+    return;
+  }
+
+  showPage(p);
+}));
+
+    // -------- AUTH SYSTEM FIXED --------
+$('#btn-login').onclick = async () => {
+  const email = $('#auth-email').value.trim();
+  const pass = $('#auth-pass').value.trim();
+  $('#auth-note').textContent = '';
+  if (!email || !pass) return $('#auth-note').textContent = 'Isi email & password';
+
+  $('#auth-note').textContent = 'Memeriksa...';
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
+
+    currentUser = data.user;
+    $('#auth-note').textContent = 'Login berhasil ✅';
+    await postLoginSetup();
+    showPage('home');
+  } catch (err) {
+    $('#auth-note').textContent = 'Login gagal: ' + (err.message || err);
+  }
+};
+
+// Pindah antar halaman login <-> daftar
+$('#btn-show-register').onclick = () => showPage('register');
+$('#btn-show-login').onclick = () => showPage('auth');
+
+// -------- REGISTER SYSTEM FIXED --------
+$('#btn-register').onclick = async () => {
+  const name = $('#reg-name').value.trim();
+  const email = $('#reg-email').value.trim();
+  const pass = $('#reg-pass').value.trim();
+  $('#reg-note').textContent = '';
+
+  if (!email || !pass) return $('#reg-note').textContent = 'Isi email & password';
+  if (pass.length < 6) return $('#reg-note').textContent = 'Password minimal 6 karakter';
+
+  $('#reg-note').textContent = 'Mendaftarkan...';
+  try {
+    // 1️⃣ Daftar ke Supabase Auth
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password: pass,
+      options: { data: { full_name: name } }
+    });
+    if (error) throw error;
+
+    // 2️⃣ Simpan user ke tabel members
+    await sb.from('members').insert([{ email, full_name: name, created_at: new Date().toISOString() }]);
+
+    $('#reg-note').textContent = 'Berhasil daftar 🎉 Silakan login.';
+    setTimeout(() => showPage('auth'), 1500);
+  } catch (err) {
+    $('#reg-note').textContent = 'Gagal daftar: ' + (err.message || err);
+  }
+};
+
+// -------- GOOGLE LOGIN --------
+$('#btn-google').onclick = async () => {
+  try {
+    const { error } = await sb.auth.signInWithOAuth({ provider: 'google' });
+    if (error) throw error;
+  } catch (err) {
+    $('#auth-note').textContent = 'Google login error: ' + (err.message || err);
+  }
+};
+
+    // affiliate & withdraw buttons
+    $('#btn-copy-aff').onclick = ()=> copyAffiliateLink();
+    $('#btn-open-aff-stats').onclick = ()=> { loadAffiliateStats(); showPage('profile'); };
+    $('#btn-request-withdraw').onclick = ()=> requestWithdraw();
+    $('#btn-load-withdraws').onclick = ()=> loadWithdraws();
+
+    // nav highlight initial
+    $$('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelector('.nav-item[data-page="home"]').classList.add('active');
+
+    // init auth and load data
+    await initAuth();
+    await loadHomeProducts();
+    await loadCategories();
+    await loadCart();
+    await loadWithdraws();
+
+    // If page loaded with affiliate params, track click
+    const params = new URLSearchParams(location.search);
+    const ref = params.get('ref');
+    const product = params.get('product');
+    if(ref){
+      // track click, but don't block UI
+      trackAffiliateClick(ref, product || null);
+    }
+  });
+  </script>
+</body>
+</html>
+
+
